@@ -1,43 +1,87 @@
-#include "matrice.hpp"
+#include "image.hpp"
+#include "filtreAddition.hpp"
+#include "suiteDeFiltre.hpp"
+#include "filtreMoyenne.hpp"
 #include <iostream>
 
 int main() {
-    // Test de la construction d'une matrice nulle de taille donnée
-    Matrice matrice1(3, 3);
-    std::cout << "Matrice 1 :\n" << matrice1 << std::endl;
 
-    // Test de l'accès en lecture et en écriture à la case (i, j)
-    matrice1(0, 0) = 1.0;
-    matrice1(1, 1) = 2.0;
-    matrice1(2, 2) = 3.0;
-    std::cout << "Matrice 1 après modifications :\n" << matrice1 << std::endl;
+	// On crée notre image img à partir du fichier fourni sur moodle
+    Image img("cairo.pgm");
 
-    // Test de la copie entre deux matrices
-    Matrice matrice2 = matrice1;
-    std::cout << "Matrice 2 (copie de Matrice 1) :\n" << matrice2 << std::endl;
+    // Test du constructeur par copie
+    Image imgCopy = img;
 
-    // Test de l'addition entre matrices
-    Matrice matrice3 = matrice1 + matrice2;
-    std::cout << "Matrice 3 (addition de Matrice 1 et Matrice 2) :\n" << matrice3 << std::endl;
+    // On obtient les dimensions de l'image
+	//Largeur
+    size_t width = img.get_w();
 
-    // Test de la multiplication d'une matrice par un scalaire
-    Matrice matrice4 = matrice1 * 2.0;
-    std::cout << "Matrice 4 (matrice1 * 2.0) :\n" << matrice4 << std::endl;
+	//Hauteur
+    size_t height = img.get_h();
 
-    // Test de la trace d'une matrice carrée
-    double trace = matrice1.trace();
-    std::cout << "Trace de Matrice 1 : " << trace << std::endl;
+    std::cout << "Dimensions de l'image : " << width << " x " << height << std::endl;
 
-    // Test de la comparaison de matrices
-    std::cout << "Matrice 1 et Matrice 2 sont-elles égales ? " << (matrice1 == matrice2 ? "Oui" : "Non") << std::endl;
+	// On affiche la valeur d'un pixel 
+    unsigned char pixelValue = img.get(5, 5);
+    std::cout << "Valeur du pixel (5,5) : " << static_cast<int>(pixelValue) << std::endl;
 
-    // Test de la méthode renvoyant une matrice identité d'une taille donnée
-    Matrice identite = Matrice::identity(3);
-    std::cout << "Matrice identité de taille 3 :\n" << identite << std::endl;
+    // On modifie un carré de pixels afin de voir clairement si notre modification marche correctement
+    for (size_t i = height/2-50; i < height/2+50; ++i) {
+        for (size_t j = width/2-50; j < width/2+50; ++j) {
+            img.set(i, j, 159); //On set la couleur à 159 sur 255 arbitrairement 
+    	}	
+	}
+    
 
-    // Test de la méthode renvoyant une matrice aléatoire d'une taille donnée
-    Matrice aleatoire = Matrice::random(3, 3);
-    std::cout << "Matrice aléatoire de taille 3x3 :\n" << aleatoire << std::endl;
+    // Sauvegarder l'image modifiée
+    img.write("cairo2.pgm");
+
+    std::cout << "L'image a été modifiée et enregistrée avec succès." << std::endl;
+
+	// Application du filtre Addition
+    FiltreAddition filtre(90);  // On crée un filtre qui ajoute 30 à chaque pixel
+    Image imgFiltree = imgCopy;     // On crée  une copie de l'image pour appliquer le filtre
+    filtre.apply(imgFiltree);   // Application le filtre
+
+	//Nous affichons la valeur du même pixel que précédement afin de comparer et savoir si notre filtre à agit correctement
+	pixelValue = imgFiltree.get(5, 5);
+	std::cout << "Valeur du pixel après filtrage (5,5) : " << static_cast<int>(pixelValue) << std::endl;
+
+    // Sauvegarder l'image filtrée
+    imgFiltree.write("cairo_filtréeAddition.pgm");
+
+    std::cout << "L'image filtrée a été enregistrée avec succès." << std::endl;
+
+	// Appliquer le filtre Moyenne
+    FiltreMoyenne filtre2(1); 
+    Image imgFiltree2 = imgCopy;     // Créer une copie de l'image pour appliquer le filtre
+    filtre2.apply(imgFiltree2);   // Appliquer le filtre
+
+	pixelValue = imgFiltree2.get(5, 5);
+	std::cout << "Valeur du pixel après filtrage (5,5) : " << static_cast<int>(pixelValue) << std::endl;
+
+    // Sauvegarder l'image filtrée
+    imgFiltree2.write("cairo_filtréeMoyenne.pgm");
+
+    std::cout << "L'image filtrée a été enregistrée avec succès." << std::endl;
+
+
+	Image imgFiltree3 = imgCopy;
+
+	// Créer la suite de filtres
+    SuiteDeFiltre suite;
+
+    // Ajouter des filtres à la suite
+    suite.add(new FiltreAddition(30));  // Ajouter un filtre d'addition
+    suite.add(new FiltreMoyenne(1));    // Ajouter un filtre moyenne
+
+    // Appliquer la suite de filtres sur l'image
+    suite.apply(imgFiltree3);
+
+    // Sauvegarder l'image résultante
+    imgFiltree3.write("cairo_filtréeSuite.pgm");
+
+    std::cout << "L'image après application de la suite de filtres a été enregistrée avec succès." << std::endl;
 
     return 0;
 }
